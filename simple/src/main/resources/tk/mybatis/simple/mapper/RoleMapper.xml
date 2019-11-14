@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="tk.mybatis.simple.mapper.RoleMapper">
+		<cache
+			eviction="FIFO"
+			flushInterval="60000"
+			size="512"
+			readOnly="false" />
+		
+		<resultMap type="tk.mybatis.simple.model.SysRole" id="roleMap">
+			<id property="id" column="id"/>
+			<result property="roleName" column="role_name" />
+			<result property="enabled" column="enabled" />
+			<result property="createBy" column="create_by"/>
+			<result property="createTime" column="create_time" jdbcType="TIMESTAMP" />
+		</resultMap>
+		
+		<resultMap type="tk.mybatis.simple.model.SysRole" id="rolePrivilegeListMap" extends="roleMap">
+			<collection property="privilegeList" columnPrefix="privilege_" 
+						resultMap="tk.mybatis.simple.mapper.PrivilegeMapper.privilegeMap">
+			</collection>
+		</resultMap>
+		
+		<resultMap type="tk.mybatis.simple.model.SysRole" id="rolePrivilegeListMapSelect" extends="roleMap">
+			<collection property="privilegeList" fetchType="lazy" 
+						select="tk.mybatis.simple.mapper.PrivilegeMapper.selectPrivilegesByRoleId"
+						column="{roleId=id}">
+			</collection>
+		</resultMap>
+		
+		<select id="selectRoleById" resultMap="roleMap">
+			select * from sys_role where id=#{id}
+		</select>
+		
+		<select id="selectRoleByUserId" resultMap="rolePrivilegeListMapSelect">
+			select r.id,
+				   r.role_name,
+				   r.enabled,
+				   r.create_by,
+				   r.create_time
+			 from sys_role r 
+			 inner join sys_user_role ur on r.id = ur.role_id
+			 where ur.user_id=#{userId}
+		</select>
+</mapper>
